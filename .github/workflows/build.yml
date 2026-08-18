@@ -1,0 +1,46 @@
+name: Build Random Light Strobe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download ChroMapper 0.13.892
+        shell: pwsh
+        run: |
+          $release = Invoke-RestMethod -Headers @{ 'User-Agent'='RandomLightStrobe-CI' } -Uri 'https://api.github.com/repos/Caeden117/ChroMapper/releases/tags/0.13.892'
+          $asset = $release.assets | Where-Object { $_.name -match 'Windows' -and $_.name -match '\.zip$' } | Select-Object -First 1
+          if (-not $asset) { throw 'Windows ZIP asset not found in ChroMapper 0.13.892 release.' }
+          Invoke-WebRequest -Headers @{ 'User-Agent'='RandomLightStrobe-CI' } -Uri $asset.browser_download_url -OutFile cm.zip
+          Expand-Archive cm.zip -DestinationPath cm -Force
+          $main = Get-ChildItem cm -Filter Main.dll -Recurse | Select-Object -First 1
+          if (-not $main) { throw 'Main.dll not found after extracting ChroMapper.' }
+          "CHROMAPPER_MANAGED=$($main.Directory.FullName)" | Out-File $env:GITHUB_ENV -Append
+
+      - name: Setup .NET Framework build tools
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build
+        shell: pwsh
+        run: msbuild RandomLightStrobe.csproj /p:Configuration=Release /p:ChroMapperManaged="$env:CHROMAPPER_MANAGED" /p:Platform=AnyCPU
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package | Out-Null
+          Copy-Item bin\Release\RandomLightStrobe.dll package\RandomLightStrobe.dll
+          Copy-Item INSTALL.bat package\INSTALL.bat
+          Compress-Archive -Path package\* -DestinationPath RandomLightStrobe.zip -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RandomLightStrobe
+          path: RandomLightStrobe.zip
