@@ -1,9 +1,12 @@
-name: Build Random Light Strobe
+name: Build and Release Random Light Strobe
 
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -24,10 +27,10 @@ jobs:
           if (-not $main) { throw 'Main.dll not found after extracting ChroMapper.' }
           "CHROMAPPER_MANAGED=$($main.Directory.FullName)" | Out-File $env:GITHUB_ENV -Append
 
-      - name: Setup .NET Framework build tools
+      - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build
+      - name: Build plugin
         shell: pwsh
         run: msbuild RandomLightStrobe.csproj /p:Configuration=Release /p:ChroMapperManaged="$env:CHROMAPPER_MANAGED" /p:Platform=AnyCPU
 
@@ -39,8 +42,14 @@ jobs:
           Copy-Item INSTALL.bat package\INSTALL.bat
           Compress-Archive -Path package\* -DestinationPath RandomLightStrobe.zip -Force
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: RandomLightStrobe
-          path: RandomLightStrobe.zip
+          tag_name: v0.1.0
+          name: Random Light Strobe v0.1.0
+          body: |
+            Première release du plugin Random Light Strobe pour ChroMapper 0.13.892.
+          files: RandomLightStrobe.zip
+          overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
