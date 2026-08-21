@@ -1,4 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
-<PropertyGroup><TargetFramework>net48</TargetFramework><LangVersion>latest</LangVersion><AssemblyName>RandomLightStrobe</AssemblyName><RootNamespace>RandomLightStrobe</RootNamespace></PropertyGroup>
-<ItemGroup><Reference Include="Main"><HintPath>$(CHROMAPPER_PATH)\ChroMapper_Data\Managed\Main.dll</HintPath><Private>false</Private></Reference><Reference Include="UnityEngine.CoreModule"><HintPath>$(CHROMAPPER_PATH)\ChroMapper_Data\Managed\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference></ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>RandomLightStrobe</AssemblyName>
+    <RootNamespace>RandomLightStrobe</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ChroMapperManaged Condition="'$(ChroMapperManaged)' == ''">$(CHROMAPPER_MANAGED)</ChroMapperManaged>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Main">
+      <HintPath>$(ChroMapperManaged)\Main.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ChroMapperManaged)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
 </Project>
